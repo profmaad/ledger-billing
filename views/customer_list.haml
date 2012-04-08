@@ -1,0 +1,14 @@
+%table.table.table-striped
+  %thead
+    %tr
+      %th.span5 Customer
+      %th.span1 Billable
+      %th.span1 Receivable
+      %th.span1 Sum
+  %tbody
+    - @customers.each do |customer_name, balances|
+      %tr
+        %td= customer_name
+        %td= balances[:billable]
+        %td= balances[:receivable]
+        %td
