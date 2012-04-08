@@ -54,13 +54,16 @@ class LedgerBilling < Sinatra::Base
 
   get "/preferences/?" do
     @preferences = @@preferences
-    puts @preferences
 
     @page_title = "Preferences"
     haml :preferences
   end
   post "/preferences/?" do
     @@preferences = params
+
+    File.open(settings.preferences, 'w') do |file|
+      YAML.dump(@@preferences, file)
+    end
 
     redirect url("/preferences")
   end

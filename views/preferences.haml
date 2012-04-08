@@ -20,13 +20,17 @@
         %input{:id => "accounts[assets]", :name => "accounts[assets]", :value => @preferences["accounts"]["assets"]}
 
   %fieldset
-    %legend Taxes
+    %legend Currencies & Taxes
     .control-group
-      %label.control-label{:for => "taxes[vat]"} VAT
+      %label.control-label{:for => "currency[vat]"} VAT
       .controls
         .input-append
-          %input{:id => "taxes[vat]", :name => "taxes[vat]", :value => @preferences["taxes"]["vat"]}
+          %input{:id => "currency[vat]", :name => "currency[vat]", :value => @preferences["currency"]["vat"]}
           %span.add-on %
+    .control-group
+      %label.control-label{:for => "currency[local_currency]"} Local Currency
+      .controls
+        %input{:id => "currency[local_currency]", :name => "currency[local_currency]", :value => @preferences["currency"]["local_currency"]}
 
   %fieldset
     %legend Personal Data
