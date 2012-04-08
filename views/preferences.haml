@@ -1,0 +1,65 @@
+%form.form-horizontal#preferences{:method => "post", :action => url("/preferences")}
+  %fieldset
+    %legend Accounts
+    .control-group
+      %label.control-label{:for => "accounts[prefix]"} Prefix
+      .controls
+        %input{:id => "accounts[prefix]", :name => "accounts[prefix]", :value => @preferences["accounts"]["prefix"]}
+
+    .control-group
+      %label.control-label{:for => "accounts[billable]"} Billables
+      .controls
+        %input{:id => "accounts[billable]", :name => "accounts[billable]", :value => @preferences["accounts"]["billable"]}
+    .control-group
+      %label.control-label{:for => "accounts[receivable]"} Receivables
+      .controls
+        %input{:id => "accounts[receivable]", :name => "accounts[receivable]", :value => @preferences["accounts"]["receivable"]}
+    .control-group
+      %label.control-label{:for => "accounts[assets]"} Assets
+      .controls
+        %input{:id => "accounts[assets]", :name => "accounts[assets]", :value => @preferences["accounts"]["assets"]}
+
+  %fieldset
+    %legend Taxes
+    .control-group
+      %label.control-label{:for => "taxes[vat]"} VAT
+      .controls
+        .input-append
+          %input{:id => "taxes[vat]", :name => "taxes[vat]", :value => @preferences["taxes"]["vat"]}
+          %span.add-on %
+
+  %fieldset
+    %legend Personal Data
+    .control-group
+      %label.control-label{:for => "personal[name]"} Name
+      .controls
+        %input{:id => "personal[name]", :name => "personal[name]", :value => @preferences["personal"]["name"]}
+    .control-group
+      %label.control-label{:for => "personal[address]"} Address
+      .controls
+        %textarea{:id => "personal[address]", :name => "personal[address]", :rows => 2}= @preferences["personal"]["address"]
+  .control-group
+    %label.control-label{:for => "personal[vatid]"} VAT-ID
+    .controls
+      %input{:id => "personal[vatid]", :name => "personal[vatid]", :value => @preferences["personal"]["vatid"]}
+  .control-group
+    %label.control-label{:for => "personal[phone]"} Phone
+    .controls
+      %input{:id => "personal[phone]", :name => "personal[phone]", :value => @preferences["personal"]["phone"]}
+  .control-group
+    %label.control-label{:for => "personal[bank]"} Bank
+    .controls
+      %textarea{:id => "personal[bank]", :name => "personal[bank]", :rows => 3}= @preferences["personal"]["bank"]
+
+  %fieldset
+    %legend Additional Values
+    .control-group
+      .controls
+        %textarea.input-xlarge{:id => "extras", :name => "extras", :rows => 5}= @preferences["extras"]
+        %p.help-block
+          Here you can enter any amount of additional variables with values, using YAML syntax. These will be available in your invoice templates in the
+          %code extras
+          namespace.
+      
+  .form-actions
+    %button.btn.btn-primary{:type => "submit"} Save

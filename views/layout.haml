@@ -1,0 +1,24 @@
+!!! Strict
+%html
+  %head
+    %title= "Ledger Billing ::: #{@page_title}"
+    %link{:rel => "stylesheet", :type => "text/css", :href => url("/css/bootstrap.css")}
+    %link{:rel => "stylesheet", :type => "text/css", :href => url("/css/ledger-billing.css")}
+    %script{:type => "text/javascript", :src => url("/js/jquery-1.7.1.min.js")}
+    %script{:type => "text/javascript", :src => url("/js/jquery.formparams.min.js")}
+    %script{:type => "text/javascript", :src => url("/js/bootstrap-modal.js")}
+    %script{:type => "text/javascript"}
+      = "var baseURL = \"#{url('/')}\";"
+  %body
+    .navbar.navbar-fixed-top
+      .navbar-inner
+        .container
+          %a.brand{:href => url("/dashboard")} Ledger Billing
+          %ul.nav
+            = haml :'navbar-content'
+          %ul.nav.pull-right
+            %li
+              %a{:href => url("/preferences")}
+                %i.icon-cog.icon-white
+    .container
+      = yield
