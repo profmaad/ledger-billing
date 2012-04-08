@@ -5,6 +5,8 @@ require 'yaml'
 require 'haml'
 require 'data_mapper'
 
+require 'pp'
+
 require 'sinatra/base'
 
 class LedgerBilling < Sinatra::Base
@@ -53,5 +55,10 @@ class LedgerBilling < Sinatra::Base
 
     @page_title = "Preferences"
     haml :preferences
+  end
+  post "/preferences/?" do
+    @@preferences = params
+
+    redirect url("/preferences")
   end
 end
