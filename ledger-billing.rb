@@ -104,6 +104,14 @@ class LedgerBilling < Sinatra::Base
     haml :customer_list
   end
 
+  get "/customer/:id" do
+    @customer = Customer.get(params[:id])
+    puts @customer.address.gsub(/\n/, '<br/>')
+
+    @page_title = @customer.name
+    haml :customer
+  end
+
   helpers do
     def http_get_with_redirection(url)
       response = Net::HTTP.get_response(url)
