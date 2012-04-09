@@ -152,10 +152,43 @@ class LedgerBilling < Sinatra::Base
 
     def balance_report_get_total(report)
       if report["total"].nil?
-        return report["accounts"].shift[1]
+        return report["accounts"].shift[1] unless report["accounts"].empty?
+        return ""
       else
         return report["total"]
       end      
+    end
+    def get_amount(amount_string)
+      return amount_string.split("").reject{|s| !"-0123456789.,".include?(s) }.join("").to_f
+    end
+    def split_amount(amount_string)
+      amount = ""
+      currency = ""
+
+      amount_string.each_char do |c|
+        if c.strip.empty?
+          next
+        elsif "-0123456789.,".include?(c)
+          amount += c
+        else
+          currency += c
+        end
+      end
+
+      return [currency, amount.to_f]
+    end
+    def sum_amounts(amounts)
+      sums = {}
+      
+      amounts.each do |s|
+        s.split("\n").each do |amount_string|
+          currency, amount = split_amount(amount_string)
+          
+          sums[currency] = 0.0 if sums[currency].nil?
+          
+          sums[currency] += amount
+        end
+      end
     end
 
     def construct_account_name(account)
