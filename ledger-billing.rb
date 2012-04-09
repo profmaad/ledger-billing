@@ -11,6 +11,14 @@ require 'pp'
 
 require 'sinatra/base'
 
+DataMapper.setup(:default, "sqlite:///#{Dir.pwd}/development.sqlite")
+
+# Models
+require 'models/customer'
+
+DataMapper.finalize
+DataMapper.auto_upgrade!
+
 class LedgerBilling < Sinatra::Base
   VERSION = "0.0"
 
@@ -36,11 +44,6 @@ class LedgerBilling < Sinatra::Base
     else
       @@preferences = PREFERENCES_SKELETON
     end
-
-    if development?
-      DataMapper::Logger.new($stdout, :debug)
-    end
-    DataMapper.setup(:default, settings.database)
   end
 
   get "/" do
@@ -84,7 +87,9 @@ class LedgerBilling < Sinatra::Base
         type = :receivable
       end
 
-      customers[customer_name] = {} if customers[customer_name].nil?
+      if customers[customer_name].nil?
+        customers[customer_name] = {:id => Customer.first_or_create(:name => customer_name).id }
+      end
 
       case type
       when :billable

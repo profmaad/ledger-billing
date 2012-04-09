@@ -8,7 +8,8 @@
   %tbody
     - @customers.each do |customer_name, balances|
       %tr
-        %td= customer_name
+        %td
+          %a{:href => url("/customer/#{balances[:id]}")}= customer_name
         %td= balances[:billable]
         %td= balances[:receivable]
         %td
