@@ -1,3 +1,41 @@
 .hero-unit
-  %h2= @customer.name
-  %p= @customer.address.gsub(/\n/, '<br />').gsub(/\r/, '')
+  .container-fluid
+    .row-fluid
+      .span6
+        %h2= @customer.name
+        %p= @customer.address.gsub(/\n/, '<br />').gsub(/\r/, '')
+      .span6
+        .row-fluid
+          %h3.span4 Billable:
+          %ul.span8.unstyled
+            - @billables.each do |b|
+              %li= b
+        .row-fluid
+          %h3.span4 Receivable:
+          %ul.span8.unstyled
+            - @receivables.each do |r|
+              %li= r
+
+.page-header
+  %h1 Transactions
+%table.table.table-striped
+  %thead
+    %tr
+      %th.span2 Date
+      %th.span2 Type
+      %th Project
+      %th.span2.pull-right Amount
+  %tbody
+    - @postings.each do |p|
+      - puts p
+      %tr
+        %td= p["date"]
+        - case classify_posting(p)
+        - when :billable
+          %td Billable
+        - when :receivable
+          %td Receivable
+        %td= p["payee"]
+        %td= p["amount"]
+        
+  

@@ -106,7 +106,8 @@ class LedgerBilling < Sinatra::Base
 
   get "/customer/:id" do
     @customer = Customer.get(params[:id])
-    puts @customer.address.gsub(/\n/, '<br/>')
+    @billables, @receivables = ledger_customer_balances(@customer.name)
+    @postings = ledger_rest_do_request("register", "\":#{@customer.name}\"")["postings"]
 
     @page_title = @customer.name
     haml :customer
@@ -127,6 +128,34 @@ class LedgerBilling < Sinatra::Base
 
     def ledger_rest_do_request(resource, query)
       return JSON.parse(http_get_with_redirection(URI.parse("#{settings.ledger_rest_uri}/#{resource}?query=#{URI.escape(query)}")))
+    end
+    def ledger_customer_balances(customer_name)
+      billables_account = '"'+construct_account_name(@@preferences["accounts"]["billable"])+":"+customer_name+'"'
+      receivables_account = '"'+construct_account_name(@@preferences["accounts"]["receivable"])+":"+customer_name+'"'
+      
+      billable_balances = ledger_rest_do_request("balance", billables_account)
+      receivable_balances = ledger_rest_do_request("balance", receivables_account)
+
+      billables = balance_report_get_total(billable_balances).split("\n")
+      receivables = balance_report_get_total(receivable_balances).split("\n")
+
+      return [billables, receivables]
+    end
+
+    def classify_posting(posting)
+      if posting["account"].include?(@@preferences["accounts"]["billable"])
+        return :billable
+      elsif posting["account"].include?(@@preferences["accounts"]["receivable"])
+        return :receivable
+      end
+    end
+
+    def balance_report_get_total(report)
+      if report["total"].nil?
+        return report["accounts"].shift[1]
+      else
+        return report["total"]
+      end      
     end
 
     def construct_account_name(account)
