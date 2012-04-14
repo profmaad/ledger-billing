@@ -3,7 +3,7 @@
     .row-fluid
       .span6
         %h2= @customer.name
-        %p= @customer.address.gsub(/\n/, '<br />').gsub(/\r/, '')
+        %p= @customer.address.gsub(/\n/, '<br />').gsub(/\r/, '') unless @customer.address.nil?
       .span6
         .row-fluid
           %h3.span4 Billable:

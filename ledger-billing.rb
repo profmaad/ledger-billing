@@ -107,8 +107,9 @@ class LedgerBilling < Sinatra::Base
   get "/customer/:id" do
     @customer = Customer.get(params[:id])
     @billables, @receivables = ledger_customer_balances(@customer.name)
-    @transactions = reconstruct_transactions(ledger_rest_do_request("register", "\":#{@customer.name}\"")["postings"])
 
+    @transactions = get_transactions_for_customer(@customer.name)
+    
     @page_title = @customer.name
     haml :customer
   end
@@ -147,7 +148,7 @@ class LedgerBilling < Sinatra::Base
         return :billable
       elsif posting["account"].include?(@@preferences["accounts"]["receivable"])
         return :receivable
-      elsif posting["account"].include?(@@Preferences["accounts"]["assets"])
+      elsif posting["account"].include?(@@preferences["accounts"]["assets"])
         return :assets
       end
     end
@@ -159,7 +160,22 @@ class LedgerBilling < Sinatra::Base
              else "Unknown"
              end
     end
+    def merge_postings(postings)
+      result = postings.inject(:+)
 
+      return result.sort { |a,b| a["date"] <=> b["date"] }      
+    end
+
+    def get_transactions_for_customer(customer)
+      assets_account = construct_account_name(@@preferences["accounts"]["assets"])
+
+      postings = ledger_rest_do_request("register", "\":#{@customer.name}\"")["postings"]
+      reverse_postings = ledger_rest_do_request("register", "-r \":#{@customer.name}\"")["postings"]      
+
+      transactions = reconstruct_transactions(merge_postings([postings, reverse_postings]))
+
+      return transactions
+    end
     def reconstruct_transactions(postings)
       transactions = []
 
