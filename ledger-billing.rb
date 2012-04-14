@@ -165,13 +165,43 @@ class LedgerBilling < Sinatra::Base
 
       postings.each do |posting|
         if transactions.last.nil? or transactions.last[:date] != posting["date"] or transactions.last[:payee] != posting["payee"]
+          transactions.last[:type] = classify_transaction(transactions.last) unless transactions.last.nil?
+
           transactions << { :date => posting["date"], :payee => posting["payee"], :postings => [posting] }
         else
           transactions.last[:postings] << posting
         end
       end
+      transactions.last[:type] = classify_transaction(transactions.last) unless transactions.last.nil?
 
       return transactions
+    end
+    def classify_transaction(transaction)
+      postings = []
+
+      transaction[:postings].each do |posting|
+        postings << { :type => classify_posting(posting), :negative => amount_negative?(posting["amount"]) }
+      end
+
+      posting_types = postings.map { |p| p[:type] }.uniq
+
+      if posting_types.size == 1 and posting_types[0] == :billable
+        return :billables
+      elsif posting_types.size == 2 and posting_types.include?(:billable) and posting_types.include?(:receivable)
+        return :invoice
+      elsif posting_types.size == 2 and posting_types.include?(:receivable) and posting_types.include?(:assets)
+        return :payment
+      else
+        return nil
+      end
+    end
+    def transaction_type_to_s(transaction_type)
+      return case transaction_type
+             when :billables then "Billables"
+             when :invoice then "Invoice"
+             when :payment then "Payment"
+             else "Unknown"
+             end
     end
 
     def balance_report_get_total(report)

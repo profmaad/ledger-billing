@@ -24,12 +24,14 @@
       %th.span2 Date
       %th Project
       %th.span2 Type
+      %th.span2 Account
       %th.span2.pull-right Amount
   %tbody
     - @transactions.each do |t|
       %tr
         %td{:rowspan => t[:postings].size}= t[:date]
         %td{:rowspan => t[:postings].size}= t[:payee]
+        %td{:rowspan => t[:postings].size}= transaction_type_to_s(t[:type])
         %td= posting_type_to_s(classify_posting(t[:postings][0]))
         %td{:class => (amount_negative?(t[:postings][0]["amount"]) ? "amount-negative" : "amount-positive")}= t[:postings][0]["amount"]
       - t[:postings][1..-1].each do |p|
