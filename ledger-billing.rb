@@ -183,7 +183,7 @@ class LedgerBilling < Sinatra::Base
         if transactions.last.nil? or transactions.last[:date] != posting["date"] or transactions.last[:payee] != posting["payee"]
           transactions.last[:type] = classify_transaction(transactions.last) unless transactions.last.nil?
 
-          transactions << { :date => posting["date"], :payee => posting["payee"], :postings => [posting] }
+          transactions << { :date => posting["date"], :payee => posting["payee"], :code => posting["code"], :postings => [posting] }
         else
           transactions.last[:postings] << posting
         end
