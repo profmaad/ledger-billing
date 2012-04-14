@@ -2,3 +2,10 @@ body
 {
     padding-top: 90px;
 }
+.amount-negative
+{
+    color: #B94A48;
+}
+,amount-positive
+{
+}

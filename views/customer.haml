@@ -22,19 +22,20 @@
   %thead
     %tr
       %th.span2 Date
-      %th.span2 Type
       %th Project
+      %th.span2 Type
       %th.span2.pull-right Amount
   %tbody
-    - @postings.each do |p|
+    - @transactions.each do |t|
       %tr
-        %td= p["date"]
-        - case classify_posting(p)
-        - when :billable
-          %td Billable
-        - when :receivable
-          %td Receivable
-        %td= p["payee"]
-        %td= p["amount"]
+        %td{:rowspan => t[:postings].size}= t[:date]
+        %td{:rowspan => t[:postings].size}= t[:payee]
+        %td= posting_type_to_s(classify_posting(t[:postings][0]))
+        %td{:class => (amount_negative?(t[:postings][0]["amount"]) ? "amount-negative" : "amount-positive")}= t[:postings][0]["amount"]
+      - t[:postings][1..-1].each do |p|
+        %tr
+          %td= posting_type_to_s(classify_posting(p))
+          %td{:class => (amount_negative?(p["amount"]) ? "amount-negative" : "amount-positive")}= p["amount"]
+          
         
   

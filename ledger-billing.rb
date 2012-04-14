@@ -107,7 +107,7 @@ class LedgerBilling < Sinatra::Base
   get "/customer/:id" do
     @customer = Customer.get(params[:id])
     @billables, @receivables = ledger_customer_balances(@customer.name)
-    @postings = ledger_rest_do_request("register", "\":#{@customer.name}\"")["postings"]
+    @transactions = reconstruct_transactions(ledger_rest_do_request("register", "\":#{@customer.name}\"")["postings"])
 
     @page_title = @customer.name
     haml :customer
@@ -147,7 +147,31 @@ class LedgerBilling < Sinatra::Base
         return :billable
       elsif posting["account"].include?(@@preferences["accounts"]["receivable"])
         return :receivable
+      elsif posting["account"].include?(@@Preferences["accounts"]["assets"])
+        return :assets
       end
+    end
+    def posting_type_to_s(posting_type)
+      return case posting_type
+             when :billable then "Billable"
+             when :receivable then "Receivable"
+             when :assets then "Assets"
+             else "Unknown"
+             end
+    end
+
+    def reconstruct_transactions(postings)
+      transactions = []
+
+      postings.each do |posting|
+        if transactions.last.nil? or transactions.last[:date] != posting["date"] or transactions.last[:payee] != posting["payee"]
+          transactions << { :date => posting["date"], :payee => posting["payee"], :postings => [posting] }
+        else
+          transactions.last[:postings] << posting
+        end
+      end
+
+      return transactions
     end
 
     def balance_report_get_total(report)
@@ -188,6 +212,13 @@ class LedgerBilling < Sinatra::Base
           
           sums[currency] += amount
         end
+      end
+    end
+    def amount_negative?(amount)
+      if amount.class == String
+        return get_amount(amount) < 0
+      else
+        return amount < 0
       end
     end
 
