@@ -27,7 +27,6 @@
       %th.span2.pull-right Amount
   %tbody
     - @postings.each do |p|
-      - puts p
       %tr
         %td= p["date"]
         - case classify_posting(p)
