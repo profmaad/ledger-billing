@@ -134,6 +134,13 @@ class LedgerBilling < Sinatra::Base
       next unless classify_posting(p) == :billable
       
       if p["amount"][-1] == "s"
+        if p["note"] =~ /@([0-9.,-]*)/ 
+          p["rate"] = $1.to_f
+          p["note"] = p["note"].gsub(/@[0-9.,-]*/, "")
+        end
+
+        pp p
+
         p["hours"] = (-get_amount(p["amount"])).to_f/3600.0
         @fees << p
       else
