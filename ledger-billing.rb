@@ -58,11 +58,20 @@ class LedgerBilling < Sinatra::Base
   get "/preferences/?" do
     @preferences = @@preferences
 
+    if @@preferences["extras"].nil?
+      @preferences["extras"] = ""
+    else
+      @preferences["extras"] = YAML.dump(@@preferences["extras"]).lines.to_a[1..-1].join
+    end
+
     @page_title = "Preferences"
     haml :preferences
   end
   post "/preferences/?" do
     @@preferences = params
+    @@preferences["extras"] = YAML.load(@@preferences["extras"])
+    @@preferences["extras"] = nil if @@preferences["extras"] == false
+    pp @@preferences
 
     File.open(settings.preferences, 'w') do |file|
       YAML.dump(@@preferences, file)
@@ -112,6 +121,41 @@ class LedgerBilling < Sinatra::Base
     
     @page_title = @customer.name
     haml :customer
+  end
+
+  get "/invoice/:customer/:invoice" do
+    @customer = Customer.get(params[:customer])
+    @invoice = get_invoice(params[:customer], params[:invoice])
+    pp @invoice
+
+    @billables = []
+    @fees = []
+    @invoice["postings"].each do |p|
+      next unless classify_posting(p) == :billable
+      
+      if p["amount"][-1] == "s"
+        p["hours"] = (-get_amount(p["amount"])).to_f/3600.0
+        @fees << p
+      else
+        @billables << p
+      end
+    end
+
+    @personal = @@preferences["personal"]
+    @currency = @@preferences["currency"]
+    @extras = @@preferences["extra"]
+
+    pdf = render_pdf(erb :"custom/invoice")
+
+    if pdf.nil?
+      return [500, "Failed to generate PDF"]
+    else
+      filename = "Invoice #{@customer[:name]} #{params[:invoice]}.pdf"
+
+      status 200
+      headers "Content-Type" => "application/pdf", "Content-Disposition" => "attachment; filename=#{filename}"
+      body pdf
+    end
   end
 
   helpers do
@@ -166,11 +210,23 @@ class LedgerBilling < Sinatra::Base
       return result.sort { |a,b| a["date"] <=> b["date"] }      
     end
 
-    def get_transactions_for_customer(customer)
+    def get_invoice(customer, invoice)
+      transactions = get_transactions_for_customer(customer, invoice)
+
+      transactions.each do |transaction|
+        return transaction if transaction["type"] == :invoice
+      end
+      
+      return nil
+    end
+    def get_transactions_for_customer(customer, invoice=nil)
       assets_account = construct_account_name(@@preferences["accounts"]["assets"])
 
-      postings = ledger_rest_do_request("register", "\":#{@customer.name}\"")["postings"]
-      reverse_postings = ledger_rest_do_request("register", "-r \":#{@customer.name}\"")["postings"]      
+      query = "\":#{@customer.name}\""
+      query += " code \"#{invoice}\"" unless invoice.nil?
+
+      postings = ledger_rest_do_request("register", query)["postings"]
+      reverse_postings = ledger_rest_do_request("register", "-r "+query)["postings"]      
 
       transactions = reconstruct_transactions(merge_postings([postings, reverse_postings]))
 
@@ -180,22 +236,22 @@ class LedgerBilling < Sinatra::Base
       transactions = []
 
       postings.each do |posting|
-        if transactions.last.nil? or transactions.last[:date] != posting["date"] or transactions.last[:payee] != posting["payee"]
-          transactions.last[:type] = classify_transaction(transactions.last) unless transactions.last.nil?
+        if transactions.last.nil? or transactions.last["date"] != posting["date"] or transactions.last["payee"] != posting["payee"]
+          transactions.last["type"] = classify_transaction(transactions.last) unless transactions.last.nil?
 
-          transactions << { :date => posting["date"], :payee => posting["payee"], :code => posting["code"], :postings => [posting] }
+          transactions << { "date" => posting["date"], "payee" => posting["payee"], "code" => posting["code"], "postings" => [posting] }
         else
-          transactions.last[:postings] << posting
+          transactions.last["postings"] << posting
         end
       end
-      transactions.last[:type] = classify_transaction(transactions.last) unless transactions.last.nil?
+      transactions.last["type"] = classify_transaction(transactions.last) unless transactions.last.nil?
 
       return transactions
     end
     def classify_transaction(transaction)
       postings = []
 
-      transaction[:postings].each do |posting|
+      transaction["postings"].each do |posting|
         postings << { :type => classify_posting(posting), :negative => amount_negative?(posting["amount"]) }
       end
 
@@ -274,6 +330,42 @@ class LedgerBilling < Sinatra::Base
       else
         return account
       end
+    end
+
+    def render_pdf(src)
+      pdf = nil
+        
+      in_tmpdir do |tmpdir|
+        File.open(tmpdir+"/document.tex", "w") do |f|
+          f.write(src)
+        end
+
+        system("cat #{tmpdir}/document.tex")
+
+        render_successful = system("pdflatex -interaction=nonstopmode -output-directory=\"#{tmpdir}\" #{tmpdir}/document.tex")
+        return nil unless render_successful          
+
+        File.open(tmpdir+"/document.pdf", "rb") do |f|
+          pdf = f.read
+        end
+      end
+
+      return pdf
+    end
+    def texify_newlines(string)
+      return nil unless string.respond_to?(:gsub)
+
+      return string.gsub(/\n/, "\\\\\\\\")
+    end
+
+    def in_tmpdir
+      path = File.expand_path "#{Dir.tmpdir}/#{Time.now.to_i}#{rand(1000)}/"
+      FileUtils.mkdir_p(path)
+      
+      yield(path)
+      
+    ensure
+      FileUtils.rm_rf(path) if File.exists?(path)
     end
   end
 end

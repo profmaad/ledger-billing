@@ -29,16 +29,16 @@
   %tbody
     - @transactions.each do |t|
       %tr
-        %td{:rowspan => t[:postings].size}= t[:date]
-        %td{:rowspan => t[:postings].size}
-          = transaction_type_to_s(t[:type])
-          - if t[:type] == :invoice
+        %td{:rowspan => t["postings"].size}= t["date"]
+        %td{:rowspan => t["postings"].size}
+          = transaction_type_to_s(t["type"])
+          - if t["type"] == :invoice
             = " "
-            %a{:href => url("/invoice/#{@customer.id}/#{t[:code]}")}= "("+t[:code]+")"
-        %td{:rowspan => t[:postings].size}= t[:payee]
-        %td= posting_type_to_s(classify_posting(t[:postings][0]))
-        %td{:class => (amount_negative?(t[:postings][0]["amount"]) ? "amount-negative" : "amount-positive")}= t[:postings][0]["amount"]
-      - t[:postings][1..-1].each do |p|
+            %a{:href => url("/invoice/#{@customer.id}/#{t["code"]}")}= "("+t["code"]+")"
+        %td{:rowspan => t["postings"].size}= t["payee"]
+        %td= posting_type_to_s(classify_posting(t["postings"][0]))
+        %td{:class => (amount_negative?(t["postings"][0]["amount"]) ? "amount-negative" : "amount-positive")}= t["postings"][0]["amount"]
+      - t["postings"][1..-1].each do |p|
         %tr
           %td= posting_type_to_s(classify_posting(p))
           %td{:class => (amount_negative?(p["amount"]) ? "amount-negative" : "amount-positive")}= p["amount"]
