@@ -20,7 +20,7 @@ DataMapper.finalize
 DataMapper.auto_upgrade!
 
 class LedgerBilling < Sinatra::Base
-  VERSION = "0.0"
+  VERSION = "0.1"
 
   CONFIG_FILE = "ledger-billing.yml"
 
