@@ -18,6 +18,14 @@
       %label.control-label{:for => "accounts[assets]"} Assets
       .controls
         %input{:id => "accounts[assets]", :name => "accounts[assets]", :value => @preferences["accounts"]["assets"]}
+    .control-group
+      %label.control-label{:for => "accounts[vat_received]"} VAT Received
+      .controls
+        %input{:id => "accounts[vat_received]", :name => "accounts[vat_received]", :value => @preferences["accounts"]["vat_received"]}
+    .control-group
+      %label.control-label{:for => "accounts[vat_paid]"} VAT Paid
+      .controls
+        %input{:id => "accounts[vat_paid]", :name => "accounts[vat_paid]", :value => @preferences["accounts"]["vat_paid"]}
 
   %fieldset
     %legend Currencies & Taxes

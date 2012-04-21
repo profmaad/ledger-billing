@@ -6,6 +6,7 @@ require 'haml'
 require 'data_mapper'
 require 'uri'
 require 'net/http'
+require 'date'
 
 require 'pp'
 
@@ -31,9 +32,14 @@ class LedgerBilling < Sinatra::Base
   set :preferences, "preferences.yml"
 
   configure do |c|
-    config = YAML.load_file(CONFIG_FILE)
-    config = {} if (config.nil? or !config)
-    puts "Failed to load config file" if config.nil?
+    config = nil
+    begin
+      config = YAML.load_file(CONFIG_FILE)
+      config = {} if (config.nil? or !config)
+    rescue Exception => e
+      config = {}
+      puts "Failed to load config file: #{e}"
+    end
 
     config.each do |key,value|
       set key.to_sym, value
@@ -128,23 +134,35 @@ class LedgerBilling < Sinatra::Base
     @invoice = get_invoice(params[:customer], params[:invoice])
     pp @invoice
 
+    @invoice["date"] = Date.strptime(@invoice["date"], '%Y/%m/%d')
+
     @billables = []
     @fees = []
+    @vat = []
     @invoice["postings"].each do |p|
-      next unless classify_posting(p) == :billable
-      
-      if p["amount"][-1] == "s"
+      case classify_posting(p)
+      when :billable
+        p["amount"] = p["amount"].gsub(/-/, "")
+
         if p["note"] =~ /@([0-9.,-]*)/ 
           p["rate"] = $1.to_f
           p["note"] = p["note"].gsub(/@[0-9.,-]*/, "")
         end
+        
+        if p["amount"][-1] == "s"
+          p["hours"] = (-get_amount(p["amount"])).to_f/3600.0
+        else
+          p["hours"] = 1
+        end
 
-        pp p
-
-        p["hours"] = (-get_amount(p["amount"])).to_f/3600.0
-        @fees << p
-      else
-        @billables << p
+        if p["hours"].nil? or p["rate"].nil?
+          @billables << p
+        else
+          @fees << p
+        end
+      when :vat
+        p["amount"] = p["amount"].gsub(/-/, "")        
+        @vat << p
       end
     end
 
@@ -201,6 +219,8 @@ class LedgerBilling < Sinatra::Base
         return :receivable
       elsif posting["account"].include?(@@preferences["accounts"]["assets"])
         return :assets
+      elsif posting["account"].include?(@@preferences["accounts"]["vat_received"])
+        return :vat
       end
     end
     def posting_type_to_s(posting_type)
@@ -208,6 +228,7 @@ class LedgerBilling < Sinatra::Base
              when :billable then "Billable"
              when :receivable then "Receivable"
              when :assets then "Assets"
+             when :vat then "VAT"
              else "Unknown"
              end
     end
@@ -266,7 +287,7 @@ class LedgerBilling < Sinatra::Base
 
       if posting_types.size == 1 and posting_types[0] == :billable
         return :billables
-      elsif posting_types.size == 2 and posting_types.include?(:billable) and posting_types.include?(:receivable)
+      elsif posting_types.size.between?(2,3) and posting_types.include?(:billable) and posting_types.include?(:receivable)
         return :invoice
       elsif posting_types.size == 2 and posting_types.include?(:receivable) and posting_types.include?(:assets)
         return :payment
@@ -363,6 +384,9 @@ class LedgerBilling < Sinatra::Base
       return nil unless string.respond_to?(:gsub)
 
       return string.gsub(/\n/, "\\\\\\\\")
+    end
+    def texify_string(string)
+      return texify_newlines(string).gsub(/_/, "\\_")
     end
 
     def in_tmpdir
