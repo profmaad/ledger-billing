@@ -1,0 +1,17 @@
+.hero-unit
+  .container-fluid
+    .row-fluid
+      .span6
+        %h2 VAT Overview
+      .span6
+        .row-fluid
+          %h3.span4 Received:
+          %ul.span8.unstyled
+            - @vat_received.each do |r|
+              %li= r
+        .row-fluid
+          %h3.span4 Paid:
+          %ul.span8.unstyled
+            - @vat_paid.each do |p|
+              %li= p
+

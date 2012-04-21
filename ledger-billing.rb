@@ -195,6 +195,15 @@ class LedgerBilling < Sinatra::Base
     end
   end
 
+  get "/tax/?" do
+    @vat_received, @vat_paid = ledger_vat_balances
+
+    @vat_received.map! { |r| r.gsub(/-/, "") }
+
+    @page_title = "Tax Overview"
+    haml :taxes
+  end
+
   helpers do
     def http_get_with_redirection(url)
       response = Net::HTTP.get_response(url)
@@ -222,6 +231,18 @@ class LedgerBilling < Sinatra::Base
       receivables = balance_report_get_total(receivable_balances).split("\n")
 
       return [billables, receivables]
+    end
+    def ledger_vat_balances
+      received_account = construct_account_name(@@preferences["accounts"]["vat_received"])
+      paid_account = construct_account_name(@@preferences["accounts"]["vat_paid"])
+
+      received_balance = ledger_rest_do_request("balance", received_account)      
+      paid_balance = ledger_rest_do_request("balance", paid_account)
+
+      received = balance_report_get_total(received_balance).split("\n")
+      paid = balance_report_get_total(paid_balance).split("\n")
+
+      return [received, paid]
     end
 
     def classify_posting(posting)
