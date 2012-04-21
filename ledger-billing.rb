@@ -129,6 +129,18 @@ class LedgerBilling < Sinatra::Base
     haml :customer
   end
 
+  get "/invoice/?" do
+    @invoices = get_invoices
+
+    @invoices.each do |invoice|
+      puts invoice["customer"]
+      invoice["customer"] = Customer.find(:name => invoice["customer"]).first unless invoice["customer"].nil?
+    end
+
+    @page_title = "Invoices"
+    haml :invoices_list
+  end
+
   get "/invoice/:customer/:invoice" do
     @customer = Customer.get(params[:customer])
     @invoice = get_invoice(params[:customer], params[:invoice])
@@ -238,6 +250,32 @@ class LedgerBilling < Sinatra::Base
       return result.sort { |a,b| a["date"] <=> b["date"] }      
     end
 
+    def customer_name_for_transaction(transaction)
+      billables_account = construct_account_name(@@preferences["accounts"]["billable"])
+      receivables_account = construct_account_name(@@preferences["accounts"]["receivable"])
+
+      transaction["postings"].each do |posting|
+        if posting["account"].start_with?(billables_account)
+          return posting["account"][billables_account.length+1..-1]
+        elsif posting["account"].start_with?(receivables_account)
+          return posting["account"][receivables_account.length+1..-1]
+        end
+      end
+
+      return nil
+    end
+
+    def get_invoices
+      transactions = get_transactions
+      
+      invoices = transactions.reject { |t| t["type"] != :invoice }
+
+      invoices.each do |invoice|
+        invoice["customer"] = customer_name_for_transaction(invoice)
+      end
+
+      return invoices
+    end
     def get_invoice(customer, invoice)
       transactions = get_transactions_for_customer(customer, invoice)
 
@@ -247,9 +285,13 @@ class LedgerBilling < Sinatra::Base
       
       return nil
     end
+    def get_transactions
+      postings = ledger_rest_do_request("register", "")["postings"]
+      transactions = reconstruct_transactions(postings)
+      
+      return transactions
+    end
     def get_transactions_for_customer(customer, invoice=nil)
-      assets_account = construct_account_name(@@preferences["accounts"]["assets"])
-
       query = "\":#{@customer.name}\""
       query += " code \"#{invoice}\"" unless invoice.nil?
 

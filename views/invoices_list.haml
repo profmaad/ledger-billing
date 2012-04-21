@@ -1,0 +1,25 @@
+.page-header
+  %h1 Invoices
+%table.table.table-striped
+  %thead
+    %tr
+      %th.span2 Date
+      %th.span2 Client
+      %th Project
+      %th.span2 Account
+      %th.span2.pull-right Amount
+  %tbody
+    - @invoices.each do |i|
+      %tr
+        %td{:rowspan => i["postings"].size}= i["date"]
+        %td{:rowspan => i["postings"].size}= (i["customer"].nil? ? "Unknown" : i["customer"].name)
+        %td{:rowspan => i["postings"].size}
+          = i["payee"]
+          - unless i["customer"].nil?
+            %a{:href => url("/invoice/#{i["customer"].id}/#{i["code"]}")}= "("+i["code"]+")"
+        %td= posting_type_to_s(classify_posting(i["postings"][0]))
+        %td{:class => (amount_negative?(i["postings"][0]["amount"]) ? "amount-negative" : "amount-positive")}= i["postings"][0]["amount"]
+      - i["postings"][1..-1].each do |p|
+        %tr
+          %td= posting_type_to_s(classify_posting(p))
+          %td{:class => (amount_negative?(p["amount"]) ? "amount-negative" : "amount-positive")}= p["amount"]
