@@ -162,7 +162,7 @@ class LedgerBilling < Sinatra::Base
         end
         
         if p["amount"][-1] == "s"
-          p["hours"] = (-get_amount(p["amount"])).to_f/3600.0
+          p["hours"] = (get_amount(p["amount"])).to_f/3600.0
         else
           p["hours"] = 1
         end
