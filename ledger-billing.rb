@@ -27,7 +27,7 @@ class LedgerBilling < Sinatra::Base
 
   PREFERENCES_SKELETON = {"accounts" => {}, "taxes" => {}, "personal" => {}}
 
-  set :ledger_rest_uri, "http://127.0.0.1:9292/rest"
+  set :ledger_rest_uri, "http://127.0.0.1:3000/rest"
   set :database, "sqlite://development.sqlite"
   set :preferences, "preferences.yml"
 
@@ -314,7 +314,7 @@ class LedgerBilling < Sinatra::Base
     end
     def get_transactions_for_customer(customer, invoice=nil)
       query = "\":#{@customer.name}\""
-      query += " code \"#{invoice}\"" unless invoice.nil?
+      query += " and code \"#{invoice}\"" unless invoice.nil?
 
       postings = ledger_rest_do_request("register", query)["postings"]
       reverse_postings = ledger_rest_do_request("register", "-r "+query)["postings"]      
