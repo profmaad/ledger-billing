@@ -134,7 +134,7 @@ class LedgerBilling < Sinatra::Base
 
     @invoices.each do |invoice|
       puts invoice["customer"]
-      invoice["customer"] = Customer.find(:name => invoice["customer"]).first unless invoice["customer"].nil?
+      invoice["customer"] = Customer.first(:name => invoice["customer"]) unless invoice["customer"].nil?
     end
 
     @page_title = "Invoices"
