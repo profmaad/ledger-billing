@@ -196,9 +196,10 @@ class LedgerBilling < Sinatra::Base
   end
 
   get "/tax/?" do
-    @vat_received, @vat_paid = ledger_vat_balances
+    @vat_received, @vat_paid, @vat_left_to_pay, @vat_reimbursements = ledger_vat_balances
 
     @vat_received.map! { |r| r.gsub(/-/, "") }
+    @vat_left_to_pay.map! { |r| r.gsub(/-/, "") }
 
     @page_title = "Tax Overview"
     haml :taxes
@@ -235,14 +236,20 @@ class LedgerBilling < Sinatra::Base
     def ledger_vat_balances
       received_account = construct_account_name(@@preferences["accounts"]["vat_received"])
       paid_account = construct_account_name(@@preferences["accounts"]["vat_paid"])
+      left_to_pay_account = construct_account_name(@@preferences["accounts"]["vat_left_to_pay"])
+      reimbursements_account = construct_account_name(@@preferences["accounts"]["vat_reimbursements"])
 
       received_balance = ledger_rest_do_request("balance", received_account)      
       paid_balance = ledger_rest_do_request("balance", paid_account)
+      left_to_pay_balance = ledger_rest_do_request("balance", left_to_pay_account)
+      reimbursements_balance = ledger_rest_do_request("balance", reimbursements_account)
 
       received = balance_report_get_total(received_balance).split("\n")
       paid = balance_report_get_total(paid_balance).split("\n")
+      left_to_pay = balance_report_get_total(left_to_pay_balance).split("\n")
+      reimbursements = balance_report_get_total(reimbursements_balance).split("\n")
 
-      return [received, paid]
+      return [received, paid, left_to_pay, reimbursements]
     end
 
     def classify_posting(posting)

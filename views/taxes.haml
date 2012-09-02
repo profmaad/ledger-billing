@@ -14,4 +14,14 @@
           %ul.span8.unstyled
             - @vat_paid.each do |p|
               %li= p
+        .row-fluid
+          %h3.span4 Left to Pay:
+          %ul.span8.unstyled
+            - @vat_left_to_pay.each do |ltp|
+              %li= ltp
+        .row-fluid
+          %h3.span4 Reimbursements:
+          %ul.span8.unstyled
+            - @vat_reimbursements.each do |r|
+              %li= r
 

@@ -26,6 +26,14 @@
       %label.control-label{:for => "accounts[vat_paid]"} VAT Paid
       .controls
         %input{:id => "accounts[vat_paid]", :name => "accounts[vat_paid]", :value => @preferences["accounts"]["vat_paid"]}
+    .control-group
+      %label.control-label{:for => "accounts[vat_paid]"} VAT left to pay
+      .controls
+        %input{:id => "accounts[vat_left_to_pay]", :name => "accounts[vat_left_to_pay]", :value => @preferences["accounts"]["vat_left_to_pay"]}
+    .control-group
+      %label.control-label{:for => "accounts[vat_paid]"} VAT Reimbursements
+      .controls
+        %input{:id => "accounts[vat_reimbursements]", :name => "accounts[vat_reimbursements]", :value => @preferences["accounts"]["vat_reimbursements"]}
 
   %fieldset
     %legend Currencies & Taxes
